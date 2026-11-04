@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ARCADES, GAMES } from '../data.js'
-import { APP_URL, checkInUrl } from '../lib/checkinLink.js'
+import { APP_URL, checkInUrl, trustedBaseOrigin } from '../lib/checkinLink.js'
 import { QrCode } from '../components/QrCode.jsx'
 import { PrimaryButton, Seg, ViewSwitch, Toggle, GameDot, Info } from '../components/ui.jsx'
 import { Qr, Nfc, Users } from '../components/Icons.jsx'
@@ -59,9 +59,7 @@ const BASE = baseFromAddress()
 function baseFromAddress() {
   try {
     const raw = new URLSearchParams(window.location.search).get('base')
-    if (!raw) return null
-    const url = new URL(raw)
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.origin : null
+    return raw ? trustedBaseOrigin(raw) : null
   } catch {
     return null
   }

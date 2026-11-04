@@ -44,9 +44,39 @@ export const APP_URL = 'https://arcade-circle.vercel.app'
 export const VENUE_PARAM = 'checkin'
 export const GAME_PARAM = 'game'
 
+/* Origins a check-in code or print sheet may point to: the production app,
+   an https deployment on Vercel or Netlify, or localhost while developing.
+   Anything else - an external site, a link with credentials in it, or plain
+   http over the network - is refused. */
+export function trustedBaseOrigin(raw) {
+  const text = String(raw ?? '').trim()
+  if (text === '' || text.startsWith('//')) return null
+  let url
+  try {
+    url = new URL(text)
+  } catch {
+    return null
+  }
+  if (url.username !== '' || url.password !== '') return null
+  const host = url.hostname.toLowerCase()
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null
+  }
+  if (url.protocol !== 'https:') return null
+  if (
+    host === 'arcade-circle.vercel.app' ||
+    host.endsWith('.vercel.app') ||
+    host.endsWith('.netlify.app')
+  ) {
+    return url.origin
+  }
+  return null
+}
+
 /* The link for one game's queue at one arcade. */
 export function checkInUrl(venueId, gameId, base = APP_URL) {
-  const url = new URL('/', base)
+  const origin = trustedBaseOrigin(base) ?? APP_URL
+  const url = new URL('/', origin)
   url.searchParams.set(VENUE_PARAM, venueId)
   url.searchParams.set(GAME_PARAM, gameId)
   return url.toString()
@@ -59,14 +89,14 @@ export function checkInUrl(venueId, gameId, base = APP_URL) {
    here; resolveCheckIn() says whether they mean anything. */
 export function readCheckInCode(text) {
   const raw = String(text ?? '').trim()
-  if (raw === '') return null
+  if (raw === '' || raw.startsWith('//')) return null
   let url
   try {
     url = new URL(raw, APP_URL)
   } catch {
     return null
   }
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+  if (!trustedBaseOrigin(url.href) || url.pathname !== '/') return null
   const venueId = clean(url.searchParams.get(VENUE_PARAM))
   if (!venueId) return null
   return { venueId, gameId: clean(url.searchParams.get(GAME_PARAM)) }
@@ -105,5 +135,6 @@ export function withoutCheckInParams(href) {
   const url = new URL(href)
   url.searchParams.delete(VENUE_PARAM)
   url.searchParams.delete(GAME_PARAM)
-  return `${url.pathname}${url.search}${url.hash}`
+  const path = url.pathname.replace(/^\/+/, '/')
+  return `${path}${url.search}${url.hash}`
 }

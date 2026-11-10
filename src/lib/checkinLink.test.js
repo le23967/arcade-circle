@@ -5,6 +5,7 @@ import {
   checkInUrl,
   readCheckInCode,
   resolveCheckIn,
+  trustedBaseOrigin,
   withoutCheckInParams,
 } from './checkinLink.js'
 import { ARCADES } from '../data.js'
@@ -102,4 +103,39 @@ test('reading a link takes out only its own two parameters', () => {
     '/?utm_source=sticker#x'
   )
   assert.equal(withoutCheckInParams('http://localhost:5173/print.html?base=x'), '/print.html?base=x')
+  assert.equal(
+    withoutCheckInParams('https://arcade-circle.vercel.app//evil.example/?checkin=koko-town-hall&game=maimai'),
+    '/evil.example/'
+  )
+})
+
+test('untrusted origins, credentials, plain http and non-root paths are rejected', () => {
+  assert.equal(trustedBaseOrigin('https://arcade-circle.vercel.app'), 'https://arcade-circle.vercel.app')
+    assert.equal(
+    trustedBaseOrigin('https://deploy-preview-3--arcade-comparison.netlify.app/print.html'),
+    null
+  )
+  assert.equal(trustedBaseOrigin('https://attacker.vercel.app'), null)
+  assert.equal(trustedBaseOrigin('https://attacker.netlify.app'), null)
+  assert.equal(trustedBaseOrigin('http://localhost:5173'), 'http://localhost:5173')
+  assert.equal(trustedBaseOrigin('http://127.0.0.1:4173'), 'http://127.0.0.1:4173')
+  assert.equal(trustedBaseOrigin('https://evil.example'), null)
+  assert.equal(trustedBaseOrigin('http://arcade-circle.vercel.app'), null)
+  assert.equal(trustedBaseOrigin('https://user:pass@arcade-circle.vercel.app'), null)
+  assert.equal(trustedBaseOrigin('//evil.example'), null)
+
+  for (const forged of [
+    'https://evil.example/?checkin=koko-town-hall&game=maimai',
+    '//evil.example/?checkin=koko-town-hall&game=maimai',
+    'http://arcade-circle.vercel.app/?checkin=koko-town-hall&game=maimai',
+    'https://user:pass@arcade-circle.vercel.app/?checkin=koko-town-hall&game=maimai',
+    'https://arcade-circle.vercel.app/print.html?checkin=koko-town-hall&game=maimai',
+  ]) {
+    assert.equal(readCheckInCode(forged), null, forged)
+  }
+
+  assert.equal(
+    checkInUrl('koko-town-hall', 'maimai', 'https://evil.example'),
+    'https://arcade-circle.vercel.app/?checkin=koko-town-hall&game=maimai'
+  )
 })

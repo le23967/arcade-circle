@@ -427,3 +427,36 @@ compare table and the detail screen all move together.
 
 Raw interview transcripts are not committed. Participants agreed to a university
 project, not to publication. The findings above are the record we keep.
+
+## Contributing workflow
+
+Changes to `main` go through a short branch and pull request workflow so the
+group can review updates before they trigger a live deployment:
+
+1. Open an issue describing the bug fix or improvement and attach a label.
+2. Create a feature branch from `main` and keep each commit focused on one
+   logical change.
+3. Run `npm ci`, `npm run lint`, `npm test` and `npm run build` locally before
+   pushing the branch.
+4. Open a pull request against `main` that links the issue it resolves (for
+   example `Closes #4`).
+5. Wait for the `CI` workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+   to pass on the pull request before merging into `main`. Direct pushes to
+   `main` are blocked by branch protection.
+
+## Security and privacy notes
+
+Accounts, follows, message requests, blocks, planned sessions and venue
+presence are protected by Row Level Security in Supabase, while live GPS
+coordinates from the browser stay on the player's own device and camera frames
+used to scan QR codes are never stored or uploaded. Check-in links and
+printable sticker URLs only accept trusted app origins and known venues and
+games, and account deletion runs on the server after verifying the caller's
+session token.
+
+- Full security review with file and line references:
+  [`docs/security-review.md`](docs/security-review.md)
+- One-page threat summary covering authentication, stored data, third-party
+  services, controls and escalation points:
+  [`docs/threat-summary.md`](docs/threat-summary.md)
+

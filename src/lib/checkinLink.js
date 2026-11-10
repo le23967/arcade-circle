@@ -44,10 +44,10 @@ export const APP_URL = 'https://arcade-circle.vercel.app'
 export const VENUE_PARAM = 'checkin'
 export const GAME_PARAM = 'game'
 
-/* Origins a check-in code or print sheet may point to: the production app,
-   an https deployment on Vercel or Netlify, or localhost while developing.
-   Anything else - an external site, a link with credentials in it, or plain
-   http over the network - is refused. */
+/* Only the production Arcade Circle origin and local development
+   addresses are trusted for check-in links and QR print sheets.
+   External deployments, embedded credentials, and insecure
+   remote HTTP links are rejected. */
 export function trustedBaseOrigin(raw) {
   const text = String(raw ?? '').trim()
   if (text === '' || text.startsWith('//')) return null
@@ -62,16 +62,11 @@ export function trustedBaseOrigin(raw) {
   if (host === 'localhost' || host === '127.0.0.1') {
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null
   }
-  if (url.protocol !== 'https:') return null
-  if (
-    host === 'arcade-circle.vercel.app' ||
-    host.endsWith('.vercel.app') ||
-    host.endsWith('.netlify.app')
-  ) {
-    return url.origin
-  }
-  return null
+if (url.protocol !== 'https:') return null
+if (host === 'arcade-circle.vercel.app') {
+  return url.origin
 }
+return null
 
 /* The link for one game's queue at one arcade. */
 export function checkInUrl(venueId, gameId, base = APP_URL) {

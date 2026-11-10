@@ -62,11 +62,12 @@ export function trustedBaseOrigin(raw) {
   if (host === 'localhost' || host === '127.0.0.1') {
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null
   }
-if (url.protocol !== 'https:') return null
-if (host === 'arcade-circle.vercel.app') {
-  return url.origin
+  if (url.protocol !== 'https:') return null
+  if (host === 'arcade-circle.vercel.app') {
+    return url.origin
+  }
+  return null
 }
-return null
 
 /* The link for one game's queue at one arcade. */
 export function checkInUrl(venueId, gameId, base = APP_URL) {

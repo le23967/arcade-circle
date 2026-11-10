@@ -111,10 +111,12 @@ test('reading a link takes out only its own two parameters', () => {
 
 test('untrusted origins, credentials, plain http and non-root paths are rejected', () => {
   assert.equal(trustedBaseOrigin('https://arcade-circle.vercel.app'), 'https://arcade-circle.vercel.app')
-  assert.equal(
+    assert.equal(
     trustedBaseOrigin('https://deploy-preview-3--arcade-comparison.netlify.app/print.html'),
-    'https://deploy-preview-3--arcade-comparison.netlify.app'
+    null
   )
+  assert.equal(trustedBaseOrigin('https://attacker.vercel.app'), null)
+  assert.equal(trustedBaseOrigin('https://attacker.netlify.app'), null)
   assert.equal(trustedBaseOrigin('http://localhost:5173'), 'http://localhost:5173')
   assert.equal(trustedBaseOrigin('http://127.0.0.1:4173'), 'http://127.0.0.1:4173')
   assert.equal(trustedBaseOrigin('https://evil.example'), null)
